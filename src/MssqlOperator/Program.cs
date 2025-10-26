@@ -1,28 +1,25 @@
 ﻿using DatabaseMetadataService = MssqlOperator.Services.DatabaseMetadataService;
 using OutputFormatter = MssqlOperator.CLI.OutputFormatter;
 using DatabaseOptions = MssqlOperator.CLI.DatabaseOptions;
+using TableOptions = MssqlOperator.CLI.TableOptions;
 using ConfigurationBuilder = Microsoft.Extensions.Configuration.ConfigurationBuilder;
 using Microsoft.Extensions.Configuration;
 using CommandLine;
+using CommandLine.Text;
 
 namespace MssqlOperator;
 
 class Program
 {
-    static async Task Main(string[] args)
+    static void Main(string[] args)
     {
-        // Show help if no arguments provided
-        if (args.Length == 0)
-        {
-            ShowHelp();
-            return;
-        }
+        var parser = new Parser(with => with.HelpWriter = null);
         
-        var result = Parser.Default.ParseArguments<DatabaseOptions>(args);
+        var result = parser.ParseArguments<DatabaseOptions, TableOptions>(args);
         
-        if (result.Tag == ParserResultType.Parsed)
-        {
-            var options = ((Parsed<DatabaseOptions>)result).Value;
+        result
+            .WithParsed<DatabaseOptions>(async (options) =>
+            {
             
             try
             {
@@ -121,33 +118,24 @@ class Program
                 Console.WriteLine($"Error: {ex.Message}");
                 Environment.Exit(1);
             }
-        }
-        else
-        {
-            // Show help when parsing fails
-            ShowHelp();
-        }
+            })
+            .WithParsed<TableOptions>((options) =>
+            {
+                Console.WriteLine($"Tables for database: {options.Database}");
+                Console.WriteLine("(Not implemented yet)");
+            })
+            .WithNotParsed(errs => DisplayHelp(result, errs));
     }
     
-    private static void ShowHelp()
+    private static void DisplayHelp<T>(ParserResult<T> result, IEnumerable<Error> errs)
     {
-        Console.WriteLine("MSSQL Operator");
-        Console.WriteLine("==============");
-        Console.WriteLine();
-        Console.WriteLine("Usage:");
-        Console.WriteLine("  mssql-operator database [options]");
-        Console.WriteLine();
-        Console.WriteLine("Commands:");
-        Console.WriteLine("  database    Database information");
-        Console.WriteLine();
-        Console.WriteLine("Options:");
-        Console.WriteLine("  -n, --name <database>    Specific database name to show details for");
-        Console.WriteLine("  -a, --all                Show all databases without selection menu");
-        Console.WriteLine("  -h, --help               Show help information");
-        Console.WriteLine();
-        Console.WriteLine("Examples:");
-        Console.WriteLine("  mssql-operator database                    # Interactive selection");
-        Console.WriteLine("  mssql-operator database --all             # Show all databases");
-        Console.WriteLine("  mssql-operator database --name master      # Show specific database");
+        var help = HelpText.AutoBuild(result, h =>
+        {
+            h.Heading = "MSSQL Operator 0.1.0";
+            h.Copyright = "Copyright (c) 2025 Cortland Goffena";
+            h.AdditionalNewLineAfterOption = false;
+            return h;
+        }, e => e);
+        Console.WriteLine(help);
     }
 }

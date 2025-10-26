@@ -11,3 +11,10 @@ public class DatabaseOptions
     [Option('a', "all", HelpText = "Show all databases without selection menu")]
     public bool ShowAll { get; set; }
 }
+
+[Verb("table", HelpText = "Table information")]
+public class TableOptions
+{
+    [Option('d', "database", Required = true, HelpText = "Database name to show tables for")]
+    public string Database { get; set; } = string.Empty;
+}
