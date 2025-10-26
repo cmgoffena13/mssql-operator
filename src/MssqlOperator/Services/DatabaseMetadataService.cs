@@ -7,11 +7,17 @@ namespace MssqlOperator.Services;
 public class DatabaseMetadataService
 {
     private const string GetDatabasesQuery = @"
-        SELECT 
+        SELECT
             name,
             database_id,
+            create_date,
+            compatibility_level,
             collation_name,
-            compatibility_level
+            user_access_desc,
+            state_desc,
+            snapshot_isolation_state_desc,
+            recovery_model_desc,
+            is_cdc_enabled
         FROM sys.databases";
 
     public async Task<List<DatabaseInfo>> GetDatabasesAsync(string connectionString)
@@ -30,8 +36,14 @@ public class DatabaseMetadataService
             {
                 Name = reader.GetString(reader.GetOrdinal("name")),
                 DatabaseId = Convert.ToInt32(reader["database_id"]),
-                Collation = reader.GetString(reader.GetOrdinal("collation_name")),
-                CompatibilityLevel = Convert.ToInt32(reader["compatibility_level"])
+                CreateDate = reader.GetDateTime(reader.GetOrdinal("create_date")),
+                CompatibilityLevel = Convert.ToInt32(reader["compatibility_level"]),
+                CollationName = reader.GetString(reader.GetOrdinal("collation_name")),
+                UserAccessDesc = reader.GetString(reader.GetOrdinal("user_access_desc")),
+                StateDesc = reader.GetString(reader.GetOrdinal("state_desc")),
+                SnapshotIsolationStateDesc = reader.GetString(reader.GetOrdinal("snapshot_isolation_state_desc")),
+                RecoveryModelDesc = reader.GetString(reader.GetOrdinal("recovery_model_desc")),
+                IsCdcEnabled = Convert.ToBoolean(reader["is_cdc_enabled"])
             });
         }
         

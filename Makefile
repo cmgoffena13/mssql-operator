@@ -9,7 +9,6 @@ help:
 	@echo "  docker-up  - Start SQL Server in Docker"
 	@echo "  docker-down- Stop Docker containers"
 	@echo "  dev        - Start SQL Server and run project"
-	@echo "  docker-all - Start SQL Server and run project with Docker Compose"
 
 build:
 	dotnet build src/MssqlOperator/
@@ -31,7 +30,7 @@ docker-down:
 
 dev: docker-up
 	@echo "Waiting for SQL Server to start..."
-	@sleep 10
+	@sleep 5
 	dotnet run --project src/MssqlOperator/
 
 docker-all:

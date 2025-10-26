@@ -12,10 +12,11 @@ class Program
         Console.WriteLine("MSSQL Operator - Database List");
         Console.WriteLine("==============================");
         
-        // Build configuration
+        // Build configuration - look in multiple locations
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddJsonFile("src/MssqlOperator/appsettings.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables()
             .Build();
 
