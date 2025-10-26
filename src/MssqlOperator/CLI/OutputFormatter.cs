@@ -21,6 +21,12 @@ public class OutputFormatter
             Console.WriteLine($"  Snapshot Isolation: {db.SnapshotIsolationStateDesc}");
             Console.WriteLine($"  Recovery Model: {db.RecoveryModelDesc}");
             Console.WriteLine($"  CDC Enabled: {db.IsCdcEnabled}");
+            Console.WriteLine($"  Change Tracking: {(db.IsChangeTrackingEnabled == true ? "Enabled" : "Disabled")}");
+            if (db.IsChangeTrackingEnabled == true)
+            {
+                Console.WriteLine($"    Auto Cleanup: {db.IsChangeTrackingAutoCleanupOn}");
+                Console.WriteLine($"    Retention: {db.ChangeTrackingRetentionPeriod} {db.ChangeTrackingRetentionPeriodUnitsDesc}");
+            }
             Console.WriteLine();
         }
     }

@@ -8,17 +8,21 @@ public class DatabaseMetadataService
 {
     private const string GetDatabasesQuery = @"
         SELECT
-            name,
-            database_id,
-            create_date,
-            compatibility_level,
-            collation_name,
-            user_access_desc,
-            state_desc,
-            snapshot_isolation_state_desc,
-            recovery_model_desc,
-            is_cdc_enabled
-        FROM sys.databases";
+            d.name,
+            d.database_id,
+            d.create_date,
+            d.compatibility_level,
+            d.collation_name,
+            d.user_access_desc,
+            d.state_desc,
+            d.snapshot_isolation_state_desc,
+            d.recovery_model_desc,
+            d.is_cdc_enabled,
+            ct.is_auto_cleanup_on,
+            ct.retention_period,
+            ct.retention_period_units_desc
+        FROM sys.databases d
+        LEFT JOIN sys.change_tracking_databases ct ON d.database_id = ct.database_id";
 
     public async Task<List<DatabaseInfo>> GetDatabasesAsync(string connectionString)
     {
@@ -32,19 +36,30 @@ public class DatabaseMetadataService
         using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
-            databases.Add(new DatabaseInfo
+            try
             {
-                Name = reader.GetString(reader.GetOrdinal("name")),
-                DatabaseId = Convert.ToInt32(reader["database_id"]),
-                CreateDate = reader.GetDateTime(reader.GetOrdinal("create_date")),
-                CompatibilityLevel = Convert.ToInt32(reader["compatibility_level"]),
-                CollationName = reader.GetString(reader.GetOrdinal("collation_name")),
-                UserAccessDesc = reader.GetString(reader.GetOrdinal("user_access_desc")),
-                StateDesc = reader.GetString(reader.GetOrdinal("state_desc")),
-                SnapshotIsolationStateDesc = reader.GetString(reader.GetOrdinal("snapshot_isolation_state_desc")),
-                RecoveryModelDesc = reader.GetString(reader.GetOrdinal("recovery_model_desc")),
-                IsCdcEnabled = Convert.ToBoolean(reader["is_cdc_enabled"])
-            });
+                databases.Add(new DatabaseInfo
+                {
+                    Name = reader.GetString(reader.GetOrdinal("name")),
+                    DatabaseId = reader.GetInt32(reader.GetOrdinal("database_id")),
+                    CreateDate = reader.GetDateTime(reader.GetOrdinal("create_date")),
+                    CompatibilityLevel = reader.GetByte(reader.GetOrdinal("compatibility_level")),
+                    CollationName = reader.GetString(reader.GetOrdinal("collation_name")),
+                    UserAccessDesc = reader.GetString(reader.GetOrdinal("user_access_desc")),
+                    StateDesc = reader.GetString(reader.GetOrdinal("state_desc")),
+                    SnapshotIsolationStateDesc = reader.GetString(reader.GetOrdinal("snapshot_isolation_state_desc")),
+                    RecoveryModelDesc = reader.GetString(reader.GetOrdinal("recovery_model_desc")),
+                    IsCdcEnabled = reader.GetBoolean(reader.GetOrdinal("is_cdc_enabled")),
+                    IsChangeTrackingEnabled = reader.IsDBNull(reader.GetOrdinal("is_auto_cleanup_on")) ? null : reader.GetBoolean(reader.GetOrdinal("is_auto_cleanup_on")),
+                    IsChangeTrackingAutoCleanupOn = reader.IsDBNull(reader.GetOrdinal("is_auto_cleanup_on")) ? null : reader.GetBoolean(reader.GetOrdinal("is_auto_cleanup_on")),
+                    ChangeTrackingRetentionPeriod = reader.IsDBNull(reader.GetOrdinal("retention_period")) ? null : Convert.ToInt32(reader["retention_period"]),
+                    ChangeTrackingRetentionPeriodUnitsDesc = reader.IsDBNull(reader.GetOrdinal("retention_period_units_desc")) ? null : reader.GetString(reader.GetOrdinal("retention_period_units_desc"))
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error reading database metadata for row {databases.Count + 1}: {ex.Message}", ex);
+            }
         }
         
         return databases;
