@@ -21,13 +21,14 @@ class Program
             .Build();
 
         // Get connection string from configuration
-        string connectionString = configuration.GetConnectionString("DefaultConnection") 
+        string connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string not found in configuration");
-        
+
         try
         {
             var service = new DatabaseMetadataService();
-            var databases = await service.GetDatabasesAsync(connectionString);
+            
+            var databases = await service.GetDatabasesAsync(connectionString, maxRetries: 3, retryDelayMs: 1000);
             OutputFormatter.DisplayDatabases(databases);
         }
         catch (Exception ex)

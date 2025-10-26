@@ -24,15 +24,25 @@ public class DatabaseMetadataService
         FROM sys.databases d
         LEFT JOIN sys.change_tracking_databases ct ON d.database_id = ct.database_id";
 
-    public async Task<List<DatabaseInfo>> GetDatabasesAsync(string connectionString)
+    public async Task<List<DatabaseInfo>> GetDatabasesAsync(string connectionString, int maxRetries = 3, int retryDelayMs = 1000)
+    {
+        return await RetryHelper.ExecuteWithRetryAsync(async () =>
+        {
+            return await GetDatabasesInternalAsync(connectionString);
+        }, 
+        maxRetries: maxRetries,
+        delayMs: retryDelayMs);
+    }
+
+    private async Task<List<DatabaseInfo>> GetDatabasesInternalAsync(string connectionString)
     {
         var databases = new List<DatabaseInfo>();
-        
+
         using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync();
-        
+
         using var command = new SqlCommand(GetDatabasesQuery, connection);
-        
+
         using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
@@ -52,7 +62,7 @@ public class DatabaseMetadataService
                     IsCdcEnabled = reader.GetBoolean(reader.GetOrdinal("is_cdc_enabled")),
                     IsChangeTrackingEnabled = reader.IsDBNull(reader.GetOrdinal("is_auto_cleanup_on")) ? null : reader.GetBoolean(reader.GetOrdinal("is_auto_cleanup_on")),
                     IsChangeTrackingAutoCleanupOn = reader.IsDBNull(reader.GetOrdinal("is_auto_cleanup_on")) ? null : reader.GetBoolean(reader.GetOrdinal("is_auto_cleanup_on")),
-                    ChangeTrackingRetentionPeriod = reader.IsDBNull(reader.GetOrdinal("retention_period")) ? null : Convert.ToInt32(reader["retention_period"]),
+                    ChangeTrackingRetentionPeriod = reader.IsDBNull(reader.GetOrdinal("retention_period")) ? null : reader.GetInt32(reader.GetOrdinal("retention_period")),
                     ChangeTrackingRetentionPeriodUnitsDesc = reader.IsDBNull(reader.GetOrdinal("retention_period_units_desc")) ? null : reader.GetString(reader.GetOrdinal("retention_period_units_desc"))
                 });
             }
@@ -61,7 +71,7 @@ public class DatabaseMetadataService
                 throw new InvalidOperationException($"Error reading database metadata for row {databases.Count + 1}: {ex.Message}", ex);
             }
         }
-        
+
         return databases;
     }
 }
