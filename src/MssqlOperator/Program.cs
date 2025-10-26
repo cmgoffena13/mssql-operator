@@ -1,4 +1,7 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using DatabaseMetadataService = MssqlOperator.Services.DatabaseMetadataService;
+using OutputFormatter = MssqlOperator.CLI.OutputFormatter;
+using ConfigurationBuilder = Microsoft.Extensions.Configuration.ConfigurationBuilder;
+using Microsoft.Extensions.Configuration;
 
 namespace MssqlOperator;
 
@@ -6,37 +9,29 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        Console.WriteLine("MSSQL Operator - Database Connection Test");
-        Console.WriteLine("==========================================");
+        Console.WriteLine("MSSQL Operator - Database List");
+        Console.WriteLine("==============================");
         
-        // Connection string for Docker SQL Server
-        string connectionString = "Server=localhost,1433;Database=master;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=true;";
+        // Build configuration
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddEnvironmentVariables()
+            .Build();
+
+        // Get connection string from configuration
+        string connectionString = configuration.GetConnectionString("DefaultConnection") 
+            ?? throw new InvalidOperationException("Connection string not found in configuration");
         
         try
         {
-            Console.WriteLine("Attempting to connect to SQL Server...");
-            
-            using var connection = new SqlConnection(connectionString);
-            await connection.OpenAsync();
-            
-            Console.WriteLine("✅ Successfully connected to SQL Server!");
-            Console.WriteLine($"Server Version: {connection.ServerVersion}");
-            Console.WriteLine($"Database: {connection.Database}");
-            
-            // Test a simple query
-            using var command = new SqlCommand("SELECT @@VERSION", connection);
-            var version = await command.ExecuteScalarAsync();
-            Console.WriteLine($"SQL Server Version: {version}");
-            
-            Console.WriteLine("\n🎉 Database connection test completed successfully!");
+            var service = new DatabaseMetadataService();
+            var databases = await service.GetDatabasesAsync(connectionString);
+            OutputFormatter.DisplayDatabases(databases);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Connection failed: {ex.Message}");
-            Console.WriteLine("\nTroubleshooting tips:");
-            Console.WriteLine("1. Make sure SQL Server container is running: docker ps");
-            Console.WriteLine("2. Check if port 1433 is available");
-            Console.WriteLine("3. Verify the connection string");
+            Console.WriteLine($"Error: {ex.Message}");
         }
     }
 }

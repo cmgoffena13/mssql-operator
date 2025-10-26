@@ -54,3 +54,10 @@ TestResult.xml
 nunit-*.xml
 
 data/
+
+# Configuration files with secrets
+appsettings.json
+appsettings.*.json
+!appsettings.Development.json.example
+
+C# Examples/
