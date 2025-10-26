@@ -30,4 +30,47 @@ public class OutputFormatter
             Console.WriteLine();
         }
     }
+
+    public static void DisplayDatabaseList(List<DatabaseInfo> databases)
+    {
+        Console.WriteLine($"Found {databases.Count} databases:");
+        Console.WriteLine();
+
+        for (int i = 0; i < databases.Count; i++)
+        {
+            var db = databases[i];
+            var ctStatus = db.IsChangeTrackingEnabled == true ? "✓" : "✗";
+            var cdcStatus = db.IsCdcEnabled ? "✓" : "✗";
+            Console.WriteLine($"{i + 1}. {db.Name} (ID: {db.DatabaseId}) - {db.StateDesc} - CT: {ctStatus} CDC: {cdcStatus}");
+        }
+        Console.WriteLine();
+    }
+
+    public static DatabaseInfo? SelectDatabase(List<DatabaseInfo> databases)
+    {
+        while (true)
+        {
+            DisplayDatabaseList(databases);
+            
+            Console.Write("Select database (number) or 'ctrl + c' to quit: ");
+            var input = Console.ReadLine();
+            
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                Console.WriteLine("No selection made. Exiting.");
+                return null;
+            }
+                
+            if (int.TryParse(input, out int selection))
+            {
+                if (selection >= 1 && selection <= databases.Count)
+                {
+                    return databases[selection - 1];
+                }
+            }
+            
+            Console.WriteLine("Invalid selection. Please try again.");
+            Console.WriteLine();
+        }
+    }
 }

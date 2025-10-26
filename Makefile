@@ -33,5 +33,17 @@ dev: docker-up
 	@sleep 5
 	dotnet run --project src/MssqlOperator/
 
+package:
+	dotnet pack src/MssqlOperator/ -c Release -o ./packages
+
+install-tool: package
+	dotnet tool install --global --add-source ./packages MssqlOperator
+
+update-tool: package
+	dotnet tool update --global --add-source ./packages MssqlOperator
+
+uninstall-tool:
+	dotnet tool uninstall --global MssqlOperator
+
 docker-all:
 	docker-compose up --build

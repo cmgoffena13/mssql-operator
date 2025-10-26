@@ -5,9 +5,16 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>mssql-operator</ToolCommandName>
+    <PackageId>MssqlOperator</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Cortland Goffena</Authors>
+    <Description>MSSQL Operator - Database metadata and operations tool</Description>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.2" />
     <PackageReference Include="ParquetSharp" Version="21.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />

@@ -22,7 +22,8 @@ public class DatabaseMetadataService
             ct.retention_period,
             ct.retention_period_units_desc
         FROM sys.databases d
-        LEFT JOIN sys.change_tracking_databases ct ON d.database_id = ct.database_id";
+        LEFT JOIN sys.change_tracking_databases ct 
+            ON d.database_id = ct.database_id";
 
     public async Task<List<DatabaseInfo>> GetDatabasesAsync(string connectionString, int maxRetries = 3, int retryDelayMs = 1000)
     {
